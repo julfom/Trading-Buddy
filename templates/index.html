@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Buddy</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        .header {
+            display: flex;
+            align-items: center; /* Align the image and text vertically */
+            gap: 15px; /* Add spacing between the image and the text */
+            margin-bottom: 20px; /* Add space below the header */
+        }
+        .header img {
+            width: 140px; /* Adjust the image width */
+            height: auto; /* Maintain aspect ratio */
+        }
+        .header h1 {
+            margin: 0; /* Remove extra margin from the header text */
+            font-size: 3.5em; /* Increase font size */
+            font-weight: bold; /* Make text bold */
+        }
+        .chart-section {
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header with logo and title -->
+        <div class="header">
+            <img src="/static/images/trading_buddy_logo.jpg" alt="Trading Buddy Logo">
+            <h1>Trading Buddy</h1>
+        </div>
+        
+        <!-- Search form -->
+        <form id="search-form">
+            <input type="text" id="ticker" name="ticker" placeholder="Enter Stock Ticker" required>
+            <button type="submit">To the moon!!! 🚀</button>
+        </form>
+
+        <!-- Results Section -->
+        <div id="results">
+            <!-- Results will be dynamically added here -->
+        </div>
+
+        <!-- Hidden AI Question Section -->
+        <div id="rag-section" style="display: none;">
+            <h2>Ask Trading Buddy any Question 🧐💭</h2>
+            <form id="question-form">
+                <input type="text" id="question" name="question" placeholder="Ask a question about the company..." required>
+                <input type="hidden" id="ticker-hidden" name="ticker">
+                <button type="submit">Ask Trading Buddy</button>
+            </form>
+            <div id="answer"></div>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function () {
+            // Handle search form submission
+            $('#search-form').on('submit', function (e) {
+                e.preventDefault();
+                const ticker = $('#ticker').val();
+                $('#results').html('<p>Loading...</p>');
+
+                $.post('/search', { ticker: ticker }, function (data) {
+                    let stockInfoHtml = `
+                        <h2>Company Information 📋📝</h2>
+                        <p><strong>Company Name:</strong> ${data.stock_info["Company Name"]}</p>
+                        <p><strong>Sector:</strong> ${data.stock_info["Sector"]}</p>
+                        <p><strong>Industry:</strong> ${data.stock_info["Industry"]}</p>
+                        <p><strong>Market Cap:</strong> ${data.stock_info["Market Cap"]}</p>
+                        <p><strong>Full-Time Employees:</strong> ${data.stock_info["Full-Time Employees"]}</p>
+                        <p><strong>Business Summary:</strong> ${data.stock_info["Business Summary"]}</p>
+                    `;
+
+                    let closingPricesHtml = `
+                        <h2>Daily Closing Prices 📈📉</h2>
+                        <div class="chart-section">${data.closing_prices_plot}</div>
+                    `;
+
+                    let indicatorsHtml = `
+                        <h2>Technical Indicators 📊🔍</h2>
+                        <h3>Simple Moving Average (20 & 50 days)</h3>
+                        <p>${data.sma_opinion}</p>
+                        <div class="chart-section">${data.sma_plot}</div>
+                        <h3>Relative Strength Index (RSI)</h3>
+                        <p>${data.rsi_opinion}</p>
+                        <div class="chart-section">${data.rsi_plot}</div>
+                        <h3>Moving Average Convergence Divergence (MACD)</h3>
+                        <p>${data.macd_opinion}</p>
+                        <div class="chart-section">${data.macd_plot}</div>
+                    `;
+
+                    let prophetHtml = `
+                        <h2>Prophet Model Predictions 🔮🤖</h2>
+                        <p><strong>Prediction:</strong> ${data.prophet_prediction.prediction_message}</p>
+                        <p><strong>Prediction Date:</strong> ${new Date(data.prophet_prediction.date).toLocaleDateString()}</p>
+                        <div class="chart-section">${data.prophet_plot}</div>
+                    `;
+
+                    let sentimentHtml = `
+                        <h2>Sentiment Analysis 🚦👍👎</h2>
+                        <div class="chart-section">${data.sentiment_distribution}</div>
+                        <div class="chart-section">${data.sentiment_proportion}</div>
+                        <div class="chart-section">${data.sentiment_summary}</div>
+                    `;
+
+                    let resultsHtml = `
+                        ${stockInfoHtml}
+                        ${closingPricesHtml}
+                        ${indicatorsHtml}
+                        ${prophetHtml}
+                        ${sentimentHtml}
+                    `;
+                    $('#results').html(resultsHtml);
+
+                    // Show the AI question section
+                    $('#ticker-hidden').val(ticker); // Store ticker for AI questions
+                    $('#rag-section').fadeIn();
+                }).fail(function (err) {
+                    $('#results').html(`<p>Error: ${err.responseJSON.error}</p>`);
+                });
+            });
+
+            // Handle question form submission
+            $('#question-form').on('submit', function (e) {
+                e.preventDefault();
+                const question = $('#question').val();
+                const ticker = $('#ticker-hidden').val();
+                $('#answer').html('<p>Loading answer...</p>');
+
+                // Ask the AI a question
+                $.post('/ask_question', { question: question, ticker: ticker }, function (data) {
+                    $('#answer').html(`<p><strong>Answer:</strong> ${data.answer}</p>`);
+                }).fail(function (err) {
+                    $('#answer').html(`<p>Error: ${err.responseJSON.error}</p>`);
+                });
+            });
+        });
+    </script>
+</body>
+</html>
