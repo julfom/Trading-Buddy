@@ -3,7 +3,7 @@
 ### Your One-Stop Stock Analysis Platform 🚀
 
 **Trading Buddy** is a comprehensive stock analysis web application designed for traders and investors. Whether you're looking to analyze historical data, technical indicators, sentiment analysis, or even leverage AI for insights, Trading Buddy has you covered—all in one place.
-
+Check out our [journey](https://app.presentations.ai/view/XVpVFn) of building this platform.
 ---
 
 ## **Features**
